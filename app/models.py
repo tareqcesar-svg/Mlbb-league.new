@@ -168,6 +168,7 @@ def get_standings(db, season_id):
     for row in rows:
         player = db.players.find_one({"_id": row["player_id"]})
         row["name"] = player["name"] if player else "؟"
+        row["telegram_id"] = player["telegram_id"] if player else None
         row["diff"] = row["kills_for"] - row["kills_against"]
 
     # sort: points desc, then kill differential desc (tiebreaker), as decided
