@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, request, jsonify
+from flask import Blueprint, current_app, request, jsonify, render_template
 from bson import ObjectId
 from datetime import datetime
 
@@ -11,7 +11,42 @@ def db():
     return current_app.config["DB"]
 
 
+def iso(value):
+    """Safely turn a datetime (or None) into a JSON-friendly ISO string."""
+    return value.isoformat() if value else None
+
+
+# ---------------- Frontend ----------------
+
+@bp.route("/")
+def index():
+    return render_template("index.html")
+
+
 # ---------------- Public endpoints ----------------
+
+@bp.route("/api/current-season")
+def current_season():
+    season = db().seasons.find_one({"status": "active"}, sort=[("created_at", -1)])
+    if not season:
+        return jsonify(None)
+
+    total_rounds = db().rounds.count_documents({"season_id": season["_id"]})
+    played_rounds = 0
+    for rnd in db().rounds.find({"season_id": season["_id"]}):
+        total_in_round = db().matches.count_documents({"round_id": rnd["_id"]})
+        played_in_round = db().matches.count_documents({"round_id": rnd["_id"], "status": "played"})
+        if total_in_round > 0 and total_in_round == played_in_round:
+            played_rounds += 1
+
+    return jsonify({
+        "season_id": str(season["_id"]),
+        "season_number": season["season_number"],
+        "is_free": season["is_free"],
+        "entry_fee": season["entry_fee"],
+        "total_rounds": total_rounds,
+        "played_rounds": played_rounds,
+    })
 
 @bp.route("/api/standings/<season_id>")
 def standings(season_id):
@@ -19,6 +54,7 @@ def standings(season_id):
     out = [{
         "rank": i + 1,
         "name": r["name"],
+        "telegram_id": r["telegram_id"],
         "games": r["wins"] + r["losses"] + r["draws"],
         "wins": r["wins"],
         "losses": r["losses"],
@@ -45,7 +81,7 @@ def schedule(season_id):
                 "match_id": str(m["_id"]),
                 "player1": p1["name"] if p1 else "؟",
                 "player2": p2["name"] if p2 else "؟",
-                "match_time": m["match_time"],
+                "match_time": iso(m["match_time"]),
                 "referee_telegram_id": m["referee_telegram_id"],
                 "status": m["status"],
                 "player1_kills": m["player1_kills"],
@@ -53,7 +89,7 @@ def schedule(season_id):
             })
         out.append({
             "round_number": rnd["round_number"],
-            "date": rnd["date"],
+            "date": iso(rnd["date"]),
             "matches": match_list,
         })
     return jsonify(out)
@@ -77,7 +113,7 @@ def my_matches(season_id, telegram_id):
         out.append({
             "match_id": str(m["_id"]),
             "opponent": opponent["name"] if opponent else "؟",
-            "match_time": m["match_time"],
+            "match_time": iso(m["match_time"]),
             "status": m["status"],
             "my_kills": m["player1_kills"] if m["player1_id"] == player["_id"] else m["player2_kills"],
             "opponent_kills": m["player2_kills"] if m["player1_id"] == player["_id"] else m["player1_kills"],
