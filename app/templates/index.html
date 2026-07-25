@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>لیگ موبایل لجندز</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0D12; --surface:#12161D; --surface-2:#1A2029; --line:#232A35;
+    --gold:#F5B942; --violet:#8B6BF0; --violet-dim:#8B6BF026;
+    --text:#F2F4F7; --muted:#6E7787; --win:#34C795; --loss:#E8607A; --draw:#7A88A0;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{ height:100%; background:var(--bg); }
+  body{ font-family:'Vazirmatn',sans-serif; color:var(--text); display:flex; flex-direction:column; min-height:100vh; }
+  .num{ font-family:'Rajdhani','Vazirmatn',sans-serif; font-weight:700; }
+
+  .topbar{ padding:16px 16px 12px; background:linear-gradient(180deg,#12161D 0%,#0A0D12 100%); border-bottom:1px solid var(--line); flex-shrink:0; }
+  .topbar-row{ display:flex; align-items:center; justify-content:space-between; }
+  .brand{ display:flex; align-items:center; gap:8px; }
+  .brand-mark{ width:26px; height:26px; border-radius:7px; background:linear-gradient(135deg,var(--violet),#5B3FD1); display:flex; align-items:center; justify-content:center; font-family:'Rajdhani'; font-weight:700; font-size:14px; color:#fff; }
+  .brand-name{ font-size:13px; font-weight:600; }
+  .season-pill{ font-size:11px; color:var(--gold); background:#F5B94218; border:1px solid #F5B94240; padding:4px 10px; border-radius:20px; font-weight:600; white-space:nowrap; }
+
+  .content{ flex:1; overflow-y:auto; padding:16px; }
+
+  .section-label{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.12em; margin-bottom:10px; font-weight:600; }
+
+  .season-track{ background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px; margin-bottom:16px; }
+  .season-track-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:14px; }
+  .season-track-head .day-num{ font-size:26px; }
+  .season-track-head .day-num span{ font-size:13px; color:var(--muted); font-weight:600; }
+  .round-tag{ font-size:12px; color:var(--violet); font-weight:600; }
+  .dots{ display:flex; gap:6px; }
+  .dot{ flex:1; height:8px; border-radius:4px; background:var(--line); }
+  .dot.done{ background:var(--violet); }
+
+  .quick-row{ display:flex; gap:10px; margin-bottom:16px; }
+  .quick-btn{ flex:1; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px 8px; text-align:center; font-size:12px; font-weight:600; }
+  .quick-btn .icon{ font-size:18px; display:block; margin-bottom:6px; }
+
+  .std-scroll{ overflow-x:auto; border-radius:16px; border:1px solid var(--line); }
+  table.league{ border-collapse:collapse; width:100%; background:var(--surface); font-size:11.5px; }
+  table.league th, table.league td{ padding:9px 8px; text-align:center; white-space:nowrap; border-bottom:1px solid var(--line); color:var(--text); font-family:'Rajdhani'; font-weight:600; font-size:14px; }
+  table.league th{ color:var(--muted); font-weight:700; font-size:10.5px; background:var(--surface-2); }
+  table.league tbody tr:last-child td{ border-bottom:none; }
+  table.league td.pname, table.league th.pname-h{ text-align:right; padding-right:12px; position:sticky; right:0; background:var(--surface); box-shadow:2px 0 6px -2px rgba(0,0,0,.4); font-family:'Vazirmatn',sans-serif; font-size:13px; }
+  table.league th.pname-h{ background:var(--surface-2); }
+  table.league tr.me td{ background:var(--violet-dim); }
+  table.league tr.me td.pname{ background:#241C3D; }
+  table.league td.w{ color:var(--win); }
+  table.league td.l{ color:var(--loss); }
+  table.league td.d{ color:var(--draw); }
+  table.league td.diffpos{ color:var(--win); }
+  table.league td.diffneg{ color:var(--loss); }
+  table.league td.pts{ color:var(--gold); font-size:16px; }
+  .my-name{ color:var(--gold); font-weight:700; }
+
+  .round-block{ margin-bottom:16px; }
+  .round-title{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .round-title .rname{ font-size:13px; font-weight:700; }
+  .round-title .rdate{ font-size:11px; color:var(--muted); }
+  .match-card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:8px; display:flex; align-items:center; gap:10px; }
+  .match-card.done{ opacity:.75; }
+  .match-player{ flex:1; text-align:center; }
+  .match-player .pn{ font-size:12.5px; font-weight:600; }
+  .match-player .pk{ font-size:20px; font-family:'Rajdhani'; font-weight:700; color:var(--muted); margin-top:2px; }
+  .match-player.winner .pk{ color:var(--win); }
+  .match-vs{ font-size:10px; color:var(--muted); font-weight:700; padding:0 4px; }
+  .match-meta{ display:flex; flex-direction:column; align-items:center; gap:2px; min-width:56px; border-right:1px solid var(--line); padding-right:10px; margin-right:2px; }
+  .match-meta .mt{ font-size:12px; color:var(--gold); font-weight:700; font-family:'Rajdhani'; }
+  .match-meta .mr{ font-size:9px; color:var(--muted); }
+
+  .my-match{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:13px 14px; margin-bottom:8px; }
+  .my-match-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .my-match-round{ font-size:10px; color:var(--muted); font-weight:600; }
+  .my-match-status{ font-size:10px; font-weight:700; padding:2px 8px; border-radius:8px; }
+  .st-upcoming{ background:#8B6BF01f; color:var(--violet); }
+  .st-win{ background:#34C7951f; color:var(--win); }
+  .st-loss{ background:#E8607A1f; color:var(--loss); }
+  .st-draw{ background:#7A88A01f; color:var(--draw); }
+  .my-match-mid{ display:flex; align-items:center; justify-content:space-between; }
+  .my-match-vs{ font-size:14px; font-weight:600; }
+  .my-match-result{ font-size:13px; color:var(--muted); font-family:'Rajdhani'; font-weight:600; }
+
+  .empty-state{ text-align:center; color:var(--muted); font-size:13px; padding:40px 20px; }
+  .loading{ text-align:center; color:var(--muted); font-size:13px; padding:30px; }
+
+  .tabbar{ display:flex; border-top:1px solid var(--line); background:#0D1117; flex-shrink:0; padding:8px 6px calc(8px + env(safe-area-inset-bottom)); }
+  .tab{ flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--muted); font-size:10px; font-weight:600; padding:6px 0; border:none; background:none; font-family:'Vazirmatn'; }
+  .tab .ticon{ font-size:18px; }
+  .tab.active{ color:var(--gold); }
+
+  .screen{ display:none; }
+  .screen.active{ display:block; }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-row">
+      <div class="brand">
+        <div class="brand-mark">ML</div>
+        <div class="brand-name">لیگ موبایل لجندز</div>
+      </div>
+      <div class="season-pill" id="season-pill">در حال بارگذاری...</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="screen active" id="screen-dashboard">
+      <div class="season-track" id="season-track">
+        <div class="loading">در حال بارگذاری فصل...</div>
+      </div>
+      <div class="quick-row">
+        <div class="quick-btn" data-target="screen-standings"><span class="icon">🏆</span>جدول</div>
+        <div class="quick-btn" data-target="screen-schedule"><span class="icon">📅</span>برنامه</div>
+        <div class="quick-btn" data-target="screen-mine"><span class="icon">🎮</span>بازی‌های من</div>
+      </div>
+      <div class="section-label">صدر جدول</div>
+      <div id="mini-standings"><div class="loading">در حال بارگذاری...</div></div>
+    </div>
+
+    <div class="screen" id="screen-standings">
+      <div class="section-label">جدول رده‌بندی</div>
+      <div id="standings-full"><div class="loading">در حال بارگذاری...</div></div>
+    </div>
+
+    <div class="screen" id="screen-schedule">
+      <div class="section-label">برنامه بازی‌ها</div>
+      <div id="schedule-full"><div class="loading">در حال بارگذاری...</div></div>
+    </div>
+
+    <div class="screen" id="screen-mine">
+      <div class="section-label">بازی‌های من</div>
+      <div id="mine-full"><div class="loading">در حال بارگذاری...</div></div>
+    </div>
+
+  </div>
+
+  <div class="tabbar">
+    <button class="tab active" data-target="screen-dashboard"><span class="ticon">🏠</span>خانه</button>
+    <button class="tab" data-target="screen-standings"><span class="ticon">🏆</span>جدول</button>
+    <button class="tab" data-target="screen-schedule"><span class="ticon">📅</span>برنامه</button>
+    <button class="tab" data-target="screen-mine"><span class="ticon">🎮</span>بازی‌های من</button>
+  </div>
+
+<script>
+  const tg = window.Telegram ? window.Telegram.WebApp : null;
+  if (tg) { tg.ready(); tg.expand(); }
+  const myTelegramId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user
+    ? String(tg.initDataUnsafe.user.id)
+    : null;
+
+  let currentSeasonId = null;
+
+  function switchTo(targetId){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.target===targetId));
+    document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id===targetId));
+  }
+  document.querySelectorAll('.tab, .quick-btn').forEach(el=>{
+    el.addEventListener('click', ()=> switchTo(el.dataset.target));
+  });
+
+  function fmtTime(iso){
+    if(!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleTimeString('fa-IR', {hour:'2-digit', minute:'2-digit'});
+  }
+  function fmtDay(iso){
+    if(!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleDateString('fa-IR', {weekday:'long', day:'numeric', month:'long'});
+  }
+
+  async function loadCurrentSeason(){
+    const res = await fetch('/api/current-season');
+    const season = await res.json();
+    if(!season){
+      document.getElementById('season-pill').textContent = 'فصلی فعال نیست';
+      document.getElementById('season-track').innerHTML = '<div class="empty-state">هنوز فصلی شروع نشده.</div>';
+      return null;
+    }
+    currentSeasonId = season.season_id;
+    document.getElementById('season-pill').textContent = season.is_free
+      ? `فصل ${toFa(season.season_number)} — رایگان`
+      : `فصل ${toFa(season.season_number)}`;
+
+    document.getElementById('season-track').innerHTML = `
+      <div class="season-track-head">
+        <div class="day-num num">${toFa(season.played_rounds)}<span> / ${toFa(season.total_rounds)} دور</span></div>
+      </div>
+      <div class="dots">${Array.from({length: season.total_rounds}).map((_,i)=>
+        `<div class="dot ${i < season.played_rounds ? 'done' : ''}"></div>`).join('')}</div>
+    `;
+    return season;
+  }
+
+  function toFa(n){
+    return String(n).replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+  }
+
+  function standingsRowHtml(r, i){
+    const isMe = myTelegramId && r.telegram_id === myTelegramId;
+    const nameHtml = isMe ? `<span class="my-name">${r.name}</span>` : r.name;
+    const diffClass = r.diff >= 0 ? 'diffpos' : 'diffneg';
+    const diffText = (r.diff >= 0 ? '+' : '') + toFa(r.diff);
+    return `<tr class="${isMe ? 'me':''} ${i===0?'top':''}">
+      <td class="pname">${toFa(i+1)}&nbsp;${nameHtml}</td>
+      <td>${toFa(r.games)}</td><td class="w">${toFa(r.wins)}</td>
+      <td class="l">${toFa(r.losses)}</td><td class="d">${toFa(r.draws)}</td>
+      <td>${toFa(r.kills_for)}</td><td>${toFa(r.kills_against)}</td>
+      <td class="${diffClass}">${diffText}</td><td class="pts">${toFa(r.points)}</td>
+    </tr>`;
+  }
+
+  async function loadStandings(){
+    if(!currentSeasonId) return;
+    const res = await fetch(`/api/standings/${currentSeasonId}`);
+    const rows = await res.json();
+
+    if(!rows.length){
+      document.getElementById('mini-standings').innerHTML = '<div class="empty-state">هنوز بازی‌ای انجام نشده.</div>';
+      document.getElementById('standings-full').innerHTML = '<div class="empty-state">هنوز بازی‌ای انجام نشده.</div>';
+      return;
+    }
+
+    const top3 = rows.slice(0,3).map((r,i)=>{
+      const isMe = myTelegramId && r.telegram_id === myTelegramId;
+      return `<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;${isMe?'background:var(--violet-dim);margin:0 -14px;padding:8px 14px;border-radius:8px;':''}">
+        <div style="width:22px;color:var(--muted);">${toFa(i+1)}</div>
+        <div style="flex:1;${isMe?'color:var(--gold);font-weight:700;':''}">${r.name}</div>
+        <div style="color:var(--gold);font-weight:700;font-family:'Rajdhani';font-size:15px;">${toFa(r.points)}</div>
+      </div>`;
+    }).join('');
+    document.getElementById('mini-standings').innerHTML =
+      `<div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;">${top3}</div>`;
+
+    document.getElementById('standings-full').innerHTML = `
+      <div class="std-scroll"><table class="league">
+        <thead><tr>
+          <th class="pname-h">بازیکن</th><th>بازی</th><th>برد</th><th>باخت</th><th>مساوی</th>
+          <th>کشتن</th><th>مردن</th><th>تفاضل</th><th>امتیاز</th>
+        </tr></thead>
+        <tbody>${rows.map(standingsRowHtml).join('')}</tbody>
+      </table></div>`;
+  }
+
+  async function loadSchedule(){
+    if(!currentSeasonId) return;
+    const res = await fetch(`/api/schedule/${currentSeasonId}`);
+    const rounds = await res.json();
+    if(!rounds.length){
+      document.getElementById('schedule-full').innerHTML = '<div class="empty-state">برنامه‌ای موجود نیست.</div>';
+      return;
+    }
+    document.getElementById('schedule-full').innerHTML = rounds.map(rnd => `
+      <div class="round-block">
+        <div class="round-title">
+          <div class="rname">دور ${toFa(rnd.round_number)}</div>
+          <div class="rdate">${fmtDay(rnd.date)}</div>
+        </div>
+        ${rnd.matches.map(m => `
+          <div class="match-card ${m.status==='played'?'done':''}">
+            <div class="match-meta">
+              <div class="mt">${m.status==='played' ? 'پایان' : fmtTime(m.match_time)}</div>
+            </div>
+            <div class="match-player ${m.status==='played' && m.player1_kills>m.player2_kills ? 'winner':''}">
+              <div class="pn">${m.player1}</div><div class="pk">${m.status==='played' ? toFa(m.player1_kills) : '—'}</div>
+            </div>
+            <div class="match-vs">VS</div>
+            <div class="match-player ${m.status==='played' && m.player2_kills>m.player1_kills ? 'winner':''}">
+              <div class="pn">${m.player2}</div><div class="pk">${m.status==='played' ? toFa(m.player2_kills) : '—'}</div>
+            </div>
+          </div>`).join('')}
+      </div>`).join('');
+  }
+
+  async function loadMyMatches(){
+    if(!currentSeasonId) return;
+    if(!myTelegramId){
+      document.getElementById('mine-full').innerHTML = '<div class="empty-state">این بخش فقط داخل تلگرام کار می‌کند.</div>';
+      return;
+    }
+    const res = await fetch(`/api/my-matches/${currentSeasonId}/${myTelegramId}`);
+    if(res.status === 404){
+      document.getElementById('mine-full').innerHTML = '<div class="empty-state">هنوز به این فصل اضافه نشده‌ای.</div>';
+      return;
+    }
+    const matches = await res.json();
+    if(!matches.length){
+      document.getElementById('mine-full').innerHTML = '<div class="empty-state">بازی‌ای ثبت نشده.</div>';
+      return;
+    }
+    document.getElementById('mine-full').innerHTML = matches.map(m => {
+      let statusClass = 'st-upcoming', statusText = fmtTime(m.match_time);
+      if(m.status === 'played'){
+        if(m.my_kills > m.opponent_kills){ statusClass='st-win'; statusText='برد'; }
+        else if(m.my_kills < m.opponent_kills){ statusClass='st-loss'; statusText='باخت'; }
+        else { statusClass='st-draw'; statusText='مساوی'; }
+      }
+      const resultHtml = m.status==='played'
+        ? `<div class="my-match-result">${toFa(m.my_kills)} — ${toFa(m.opponent_kills)}</div>`
+        : `<div class="my-match-result">${fmtTime(m.match_time)}</div>`;
+      return `<div class="my-match">
+        <div class="my-match-top"><div class="my-match-status ${statusClass}">${statusText}</div></div>
+        <div class="my-match-mid"><div class="my-match-vs">در برابر ${m.opponent}</div>${resultHtml}</div>
+      </div>`;
+    }).join('');
+  }
+
+  (async function init(){
+    const season = await loadCurrentSeason();
+    if(season){
+      await Promise.all([loadStandings(), loadSchedule(), loadMyMatches()]);
+    }
+  })();
+</script>
+</body>
+</html>
